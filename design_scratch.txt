@@ -1,0 +1,82 @@
+// Ping generator steps
+
+1. Create Models
+    - Ping
+    - Location (geofences)
+2. Create Plan Tiers (Free=small, Growth=medium, Enterprise=large)
+    - These correspond to number of devices
+    - Distribution config will determine # of tenants per plan tier
+2. Calculate # of devices per Tenant
+    - Use distribution values to control counts
+
+
+// Generator notes
+What it should produce
+
+Tenants (1,000): the customer apps using the platform. Give each one an ID, a plan tier, and a set of 
+geofences (for example, store locations as small circles or polygons in a few metro areas). Make tenant 
+sizes skewed, not uniform: a long tail of small tenants, a few medium ones, and one whale.
+
+The whale tenant: a single tenant holding about 40% of all devices and pings. This exists on purpose. 
+It drives the hot-partition experiment in week 7, the noisy-neighbor problem in week 12, and the 
+whale vs median cost-per-tenant comparison.
+
+Devices with a realistic mix: each device belongs to one tenant and varies in ways real phones do:
+
+Platform: an iOS/Android split.
+SDK version: several versions, including a few old ones still in the field. Drill #10 on schema evolution uses this.
+GPS accuracy: a profile of high, medium or low accuracy, recorded as an accuracy radius in meters.
+Behavior: stationary, walking or driving, which sets how often the device pings and how far it moves between pings.
+
+Pings: the core records. Suggested schema:
+
+ping_id
+device_id
+tenant_id
+ts, the event time
+lat, lng
+accuracy_m
+speed_mps
+platform
+sdk_version
+is_spoofed
+
+Movement should be simple but plausible: devices move between a few anchor points (home, work, stores) 
+rather than wandering randomly. Some trips should pass into tenants’ geofences, so the Flink job in 
+week 8 has real entries and exits to detect.
+
+Spoofed pings for Phase 6: a small share of devices, around 1%, fake their location, and their pings 
+carry is_spoofed = true as the ground-truth label. Give them detectable but not trivial patterns:
+
+teleport jumps implying impossible speeds
+suspiciously constant accuracy
+a fixed position while the device reports movement
+
+Your week 15 features (speed between pings, distance jumps, accuracy variance) need something real to learn.
+
+What “deterministic from a seed” means
+
+Running the generator twice with the same seed and configuration must produce identical data. Change the 
+seed, and you get different data. This matters for three reasons:
+
+Fair benchmarks: week 5 compares partition layouts, and that’s only meaningful if every layout holds exactly the same rows.
+Ground truth: Phase 3 reconciles sink counts against what the generator produced, so you need to be able to 
+regenerate the expected answer.
+Debugging: a bug you find in week 8 can be reproduced exactly.
+
+How to achieve it:
+
+Never use the current time or an unseeded random source. Timestamps start from a fixed date in the config.
+Use one seeded generator, and spawn child generators per tenant or partition. In Python, use NumPy’s SeedSequence.spawn. 
+That keeps output identical even if you later generate in parallel chunks.
+Derive IDs from the seeded generator (or from a hash of seed, device and sequence number), not from uuid4().
+Put every parameter in one config file: tenant count, whale share, spoof rate, device mix, date range, seed.
+
+Done-when checklist
+
+Two runs with seed 42 produce identical output (same file checksums, or the same hash over sorted rows).
+A run with seed 43 produces different data.
+The whale tenant holds about 40% of pings, and the rest follow a long tail.
+The spoof rate matches the config, and spoofed devices show impossible speeds when you compute them.
+At least some devices enter geofences each simulated day.
+A README documents the schema, the distributions, and the config options.

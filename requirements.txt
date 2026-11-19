@@ -1,0 +1,21 @@
+# Web framework
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+pydantic>=2.12,<3.0
+python-multipart==0.0.* 
+
+# AWS SDK for Python
+boto3==1.35.*
+
+# Utility libraries
+pydantic-settings>=2.6,<3.0
+python-dotenv==1.0.*
+httpx==0.27.*
+debugpy==1.8.*
+PyYAML>=6.0
+numpy
+pandas
+pyarrow>=16
+
+# Testing
+pytest

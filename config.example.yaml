@@ -1,0 +1,41 @@
+# Week 3 scale: about 1M pings over one simulated day.
+# Week 4: raise total_pings to 1_000_000_000 (and run on EC2).
+
+global_seed: 42
+start_date: "2026-01-01"
+simulated_days: 1
+total_pings: 1000000          # ping budget for the whole run; device count is derived from it
+tenant_count: 1000
+
+# Tenant sizes: one whale, then a lognormal long tail
+whale_share: 0.40
+tenant_size_sigma: 1.5
+
+# Device mix (shares of devices, not of pings)
+behavior_mix: {stationary: 0.55, walking: 0.30, driving: 0.10, mixed: 0.05}
+ios_share: 0.55
+sdk_versions: {"4.2.0": 0.45, "4.1.3": 0.30, "3.9.2": 0.18, "3.2.1": 0.07}
+accuracy_mix: {high: 0.60, medium: 0.30, low: 0.10}
+
+# Spoofing ground truth for Phase 6
+spoofer_rate: 0.01
+spoof_pattern_mix: {teleport: 0.40, static_while_moving: 0.30, fixed_accuracy: 0.30}
+
+# Geography and geofences
+metro_spread_km: 12.0
+device_home_metro_prob: 0.85
+max_anchors_per_device: 4
+geofence_anchor_prob: 0.35    # share of a device's anchors placed inside its tenant's geofences
+geofences_base: 2
+geofences_per_sqrt_device: 0.5
+geofences_max_per_tenant: 200
+geofence_radius_m: [50.0, 300.0]
+
+# Sharding (part of the data's identity: keep block size fixed once chosen)
+# At week 3 scale there are only ~3,400 devices, so use small blocks and shards
+# to exercise the parallel path. For the 1B run use 1000 and 5000000.
+device_block_size: 100
+shard_target_pings: 100000
+
+region: us-east-1
+chaos_rates: [0.0]

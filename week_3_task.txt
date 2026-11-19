@@ -1,0 +1,24 @@
+The task is complete when the generator actually produces pings and passes the checks.
+
+Week 3 finish line:
+
+1. All four tables generated: tenants, devices, geofences (simple circles are fine for now), 
+and pings, written to disk in per-shard files.
+
+2. Pings at small scale: around 1M pings, produced shard by shard from the devices’ behavior 
+and movement. The full 1B run happens in week 4.
+
+3. Determinism proven: two runs with seed 42 give identical checksums, including one run with 1 
+worker and one with 8. Seed 43 gives different data.
+
+Distributions check out:
+The whale holds about 40% of pings.
+The rest follow a long tail.
+The spoof rate matches the config, and spoofed devices show impossible speeds.
+Some devices cross geofences each simulated day.
+
+README written: schemas, distributions, config options, and how to run it.
+
+If you get through items 1–3 but not the distribution checks or README in your 2.5 hours, 
+finish them before week 4’s Parquet conversion. Week 4 depends on the generator being 
+trustworthy at scale.
